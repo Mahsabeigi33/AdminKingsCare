@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_dev
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: neondb_owner
+      POSTGRES_PASSWORD: "npg_koN42zrewEjb"
+      POSTGRES_DB: neondb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+
