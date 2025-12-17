@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  role          Role     @default(STAFF)
+  passwordHash  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointments  Appointment[]
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model Patient {
+  id          String        @id @default(cuid())
+  firstName   String
+  lastName    String
+  phone       String?       @unique
+  email       String?       @unique
+  dob         DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  appointments Appointment[]
+  serviceUsages PatientServiceUsage[]
+  account      PatientAccount?
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  durationMin  Int           @default(15)
+  priceCents   Int           @default(0)
+  description  String?
+  shortDescription String?
+  images       String[]      @db.Text @default([])
+  parentId     String?
+  parent       Service?      @relation("ServiceHierarchy", fields: [parentId], references: [id])
+  subServices  Service[]     @relation("ServiceHierarchy")
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  appointments Appointment[]
+  serviceUsages PatientServiceUsage[]
+}
+
+model Appointment {
+  id         String      @id @default(cuid())
+  date       DateTime
+  status     ApptStatus  @default(BOOKED)
+  patientId  String?
+  serviceId  String
+  staffId    String?
+  notes      String?
+
+  customPatientName String?
+
+  patient    Patient?    @relation(fields: [patientId], references: [id])
+  service    Service     @relation(fields: [serviceId], references: [id])
+  staff      User?       @relation(fields: [staffId], references: [id])
+}
+
+enum ApptStatus {
+  BOOKED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model PatientServiceUsage {
+  id        String   @id @default(cuid())
+  patientId String
+  serviceId String
+  usedAt    DateTime @default(now())
+
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, serviceId])
+}
+
+model PatientAccount {
+  id           String   @id @default(cuid())
+  patientId    String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Blog {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String?
+  imageUrl    String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
