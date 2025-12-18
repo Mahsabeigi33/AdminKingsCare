@@ -153,7 +153,7 @@ export default function UsersManager({ initialUsers }: Props) {
               className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
               value={form.email}
               onChange={(event) => handleChange('email', event.target.value)}
-              placeholder="user@pharmacylyfe.com"
+              placeholder="user@kingscare.ca"
               required
               disabled={submitting}
             />

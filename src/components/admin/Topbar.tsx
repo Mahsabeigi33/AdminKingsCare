@@ -32,7 +32,7 @@ export function AdminTopbar({ user }: AdminTopbarProps) {
 
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-foreground">{user?.name ?? "Admin"}</p>
-              <p className="text-xs text-muted-foreground">{user?.email ?? "admin@pharmacylyfe.com"}</p>
+              <p className="text-xs text-muted-foreground">{user?.email ?? "admin@kingscare.ca"}</p>
             </div>
             <button
               type="button"

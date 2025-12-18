@@ -29,12 +29,14 @@ const AppointmentsIcon = createIcon("M8 6V4m8 2V4m-9 6h10m-12 10h14a1 1 0 001-1V
 const BlogsIcon = createIcon("M5 4h9l5 5v11a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zm9 0v5h5")
 const UsersIcon = createIcon("M16 16v3m-8-3v3m12-5a4 4 0 10-8 0m-8 5v-1a5 5 0 015-5h6a5 5 0 015 5v1M8 7a4 4 0 118 0 4 4 0 01-8 0z")
 const PatientsIcon = createIcon("M17 21v-2a4 4 0 00-4-4h-2a4 4 0 00-4 4v2m9-13a4 4 0 11-8 0 4 4 0 018 0z")
+const DoctorsIcon = createIcon("M5 8a7 7 0 1114 0v6a4 4 0 01-4 4h-6a4 4 0 01-4-4V8zm4 8h6m-3-6v3m-3-8.5h6")
 
 export const adminNavItems: AdminNavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/admin/services", label: "Services", icon: ServicesIcon },
   { href: "/admin/appointments", label: "Appointments", icon: AppointmentsIcon },
-  { href: "/admin/blogs", label: "Blogs", icon: BlogsIcon },
+  { href: "/admin/doctors", label: "Doctors", icon: DoctorsIcon },
+  // { href: "/admin/blogs", label: "Blogs", icon: BlogsIcon },
   { href: "/admin/users", label: "Users", icon: UsersIcon },
   { href: "/admin/patients", label: "Patients", icon: PatientsIcon },
 ]

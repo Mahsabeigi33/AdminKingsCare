@@ -66,7 +66,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition"
-                placeholder="jane@pharmacylyfe.com"
+                placeholder="jane@kingscare.ca"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
