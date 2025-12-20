@@ -23,6 +23,21 @@ const uploadsDirectory = isServerless
   ? path.join(os.tmpdir(), 'uploads', 'blogs')
   : path.join(process.cwd(), 'public', 'uploads', 'blogs')
 
+const shouldDeleteBlob = (url?: string | null) => Boolean(url && /blob\.vercel-storage\.com/i.test(url))
+
+async function deleteBlobIfNeeded(url?: string | null) {
+  if (!shouldDeleteBlob(url)) return
+  try {
+    const mod: unknown = await import('@vercel/blob')
+    const del = (mod as { del?: (url: string) => Promise<void> }).del
+    if (typeof del === 'function') {
+      await del(url as string)
+    }
+  } catch (error) {
+    console.error('Unable to delete blob asset', error)
+  }
+}
+
 async function persistImage(file: File) {
   if (file.size === 0) return undefined
   if (file.size > MAX_UPLOAD_SIZE) {
@@ -46,6 +61,10 @@ async function persistImage(file: File) {
       return blob.url
     }
   } catch {}
+
+  if (isServerless) {
+    throw new Error('BLOB_UPLOAD_FAILED')
+  }
 
   // Fallback to local/temp storage (ephemeral)
   const filePath = path.join(uploadsDirectory, filename)
@@ -107,7 +126,10 @@ export async function POST(request: Request) {
           imageUrl = await persistImage(file)
         } catch (error) {
           if (error instanceof Error && error.message === 'IMAGE_TOO_LARGE') {
-            return NextResponse.json({ error: 'Image must be smaller than 5MB.' }, { status: 413 })
+            return NextResponse.json({ error: 'Image must be smaller than 4MB.' }, { status: 413 })
+          }
+          if (error instanceof Error && error.message === 'BLOB_UPLOAD_FAILED') {
+            return NextResponse.json({ error: 'Unable to upload image to blob storage.' }, { status: 503 })
           }
           console.error('Image upload failed', error)
           return NextResponse.json({ error: 'Unable to save image.' }, { status: 500 })

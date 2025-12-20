@@ -23,6 +23,21 @@ const uploadsDirectory = isServerless
   ? path.join(os.tmpdir(), 'uploads', 'blogs')
   : path.join(process.cwd(), 'public', 'uploads', 'blogs')
 
+const shouldDeleteBlob = (url?: string | null) => Boolean(url && /blob\.vercel-storage\.com/i.test(url))
+
+async function deleteBlobIfNeeded(url?: string | null) {
+  if (!shouldDeleteBlob(url)) return
+  try {
+    const mod: unknown = await import('@vercel/blob')
+    const del = (mod as { del?: (url: string) => Promise<void> }).del
+    if (typeof del === 'function') {
+      await del(url as string)
+    }
+  } catch (error) {
+    console.error('Unable to delete blob asset', error)
+  }
+}
+
 type RouteContext = { params: Promise<{ id: string }> }
 
 async function persistImage(file: File) {
@@ -49,6 +64,10 @@ async function persistImage(file: File) {
     }
   } catch {}
 
+  if (isServerless) {
+    throw new Error('BLOB_UPLOAD_FAILED')
+  }
+
   // Fallback to local/temp storage (ephemeral)
   const filePath = path.join(uploadsDirectory, filename)
   await fs.mkdir(uploadsDirectory, { recursive: true })
@@ -71,6 +90,10 @@ function formString(value: FormDataEntryValue | null) {
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params
+    const existing = await prisma.blog.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
     const contentType = request.headers.get('content-type') ?? ''
 
     if (contentType.includes('multipart/form-data')) {
@@ -113,7 +136,10 @@ export async function PATCH(request: Request, context: RouteContext) {
           data.imageUrl = await persistImage(file)
         } catch (error) {
           if (error instanceof Error && error.message === 'IMAGE_TOO_LARGE') {
-            return NextResponse.json({ error: 'Image must be smaller than 5MB.' }, { status: 413 })
+            return NextResponse.json({ error: 'Image must be smaller than 4MB.' }, { status: 413 })
+          }
+          if (error instanceof Error && error.message === 'BLOB_UPLOAD_FAILED') {
+            return NextResponse.json({ error: 'Unable to upload image to blob storage.' }, { status: 503 })
           }
           console.error('Image upload failed', error)
           return NextResponse.json({ error: 'Unable to save image.' }, { status: 500 })
@@ -124,6 +150,11 @@ export async function PATCH(request: Request, context: RouteContext) {
         where: { id },
         data,
       })
+
+      // Clean up previous blob if replaced or removed
+      if (removeImageFlag || data.imageUrl) {
+        await deleteBlobIfNeeded(existing.imageUrl)
+      }
 
       return NextResponse.json(blog)
     }
@@ -144,7 +175,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_: Request, context: RouteContext) {
   try {
     const { id } = await context.params
+    const existing = await prisma.blog.findUnique({ where: { id } })
     await prisma.blog.delete({ where: { id } })
+    await deleteBlobIfNeeded(existing?.imageUrl)
     return NextResponse.json({ ok: true })
   } catch (error: unknown) {
     console.error('DELETE /api/blogs/[id]', error)
