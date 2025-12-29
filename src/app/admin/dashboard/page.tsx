@@ -10,14 +10,6 @@ const STATUS_COLORS: Record<string, string> = {
   NO_SHOW: "text-slate-600 dark:text-slate-300 bg-slate-500/10 border-slate-400/40",
 }
 
-function formatPrice(cents: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(cents / 100)
-}
-
 export default async function DashboardPage() {
   const now = new Date()
 
@@ -160,13 +152,11 @@ export default async function DashboardPage() {
               {popularServices.map((service: {
                 id: string | number
                 name: string
-                priceCents: number
                 _count: { appointments: number }
               }) => (
                 <li key={service.id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-slate-700 dark:text-slate-200">{service.name}</p>
-                    <p className="text-xs text-slate-500">{formatPrice(service.priceCents)}</p>
                   </div>
                   <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-200">
                     {service._count.appointments}

@@ -16,7 +16,7 @@ export type Appointment = {
   notes?: string | null
   customPatientName?: string | null
   patient: { id: string; firstName: string; lastName: string } | null
-  service: { id: string; name: string; priceCents: number }
+  service: { id: string; name: string }
   staff?: { id: string; name: string | null } | null
 }
 
@@ -29,7 +29,6 @@ type Patient = {
 type Service = {
   id: string
   name: string
-  priceCents: number
 }
 
 type Staff = {
@@ -68,11 +67,6 @@ type ToastState = {
 const STATUS_OPTIONS: Appointment["status"][] = ["BOOKED", "COMPLETED", "CANCELLED", "NO_SHOW"]
 
 const cardClass = "rounded-3xl border border-slate-200/70 dark:border-slate-800/60 bg-white/90 dark:bg-slate-950/80 p-6 shadow-2xl shadow-slate-200/60 dark:shadow-black/20"
-
-const formatPrice = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "CAD", minimumFractionDigits: 0 }).format(
-    value / 100,
-  )
 
 const getPatientLabel = (patient: Patient | Appointment["patient"]) =>
   patient ? `${patient.firstName} ${patient.lastName}` : ""
@@ -393,7 +387,7 @@ export default function AppointmentsManager({ initialAppointments, patients, ser
             >
               {services.map((service) => (
                 <option key={service.id} value={service.id}>
-                  {service.name} | {formatPrice(service.priceCents)}
+                  {service.name}
                 </option>
               ))}
             </Select>
@@ -498,7 +492,6 @@ export default function AppointmentsManager({ initialAppointments, patients, ser
                   <td className="px-3 py-3 text-slate-900 dark:text-slate-100">{getAppointmentPatient(appointment)}</td>
                   <td className="px-3 py-3 text-slate-500 dark:text-slate-400">
                     <div className="font-medium text-slate-700 dark:text-slate-200">{appointment.service.name}</div>
-                    <p className="text-xs text-slate-500">{formatPrice(appointment.service.priceCents)}</p>
                   </td>
                   <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{appointment.staff?.name ?? "Unassigned"}</td>
                   <td className="px-3 py-3 text-center text-slate-700 dark:text-slate-200">

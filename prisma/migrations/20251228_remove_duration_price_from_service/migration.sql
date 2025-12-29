@@ -1,0 +1,2 @@
+ALTER TABLE "Service" DROP COLUMN IF EXISTS "durationMin";
+ALTER TABLE "Service" DROP COLUMN IF EXISTS "priceCents";
