@@ -17,8 +17,6 @@ type ServiceRelation = {
 type Service = {
   id: string
   name: string
-  durationMin: number
-  priceCents: number
   description: string | null
   shortDescription?: string | null
   images: string[]
@@ -35,8 +33,6 @@ type Props = {
 
 type FormState = {
   name: string
-  durationMin: number
-  priceDollars: string
   description: string
   shortDescription: string
   parentId: string
@@ -48,35 +44,11 @@ type ToastState = {
   severity: "success" | "error"
 }
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024 // 4MB (must match API limit)
 const cardClass = "rounded-3xl border border-slate-200/70 dark:border-slate-800/60 bg-white/90 dark:bg-slate-950/80 p-6 shadow-2xl shadow-slate-200/60 dark:shadow-black/20"
-
-const formatPrice = (value: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(value / 100)
-}
-
-const toPriceCents = (value: string | number) => {
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) return 0
-    return Math.round(Math.max(0, value * 100))
-  }
-
-  const normalized = value.trim()
-  if (!normalized) return 0
-
-  const parsed = Number.parseFloat(normalized)
-  if (!Number.isFinite(parsed)) return 0
-
-  return Math.round(Math.max(0, parsed * 100))
-}
 
 const buildEmptyForm = (): FormState => ({
   name: "",
-  durationMin: 30,
-  priceDollars: "",
   description: "",
   shortDescription: "",
   parentId: "",
@@ -85,8 +57,6 @@ const buildEmptyForm = (): FormState => ({
 
 const serviceToForm = (service: Service): FormState => ({
   name: service.name,
-  durationMin: service.durationMin,
-  priceDollars: service.priceCents > 0 ? (service.priceCents / 100).toFixed(2) : "",
   description: service.description ?? "",
   shortDescription: service.shortDescription ?? "",
   parentId: service.parentId ?? "",
@@ -247,7 +217,7 @@ export default function ServicesManager({ initialServices }: Props) {
   const closeToast = () => setToast(null)
 
   const reloadServices = async () => {
-    const response = await fetch("/api/services", {next: { revalidate },   cache: "force-cache" })
+    const response = await fetch("/api/services", { next: { revalidate }, cache: "force-cache" })
     if (!response.ok) throw new Error("Failed to load services")
     const refreshed: Service[] = await response.json()
     setServices(refreshed)
@@ -341,8 +311,6 @@ export default function ServicesManager({ initialServices }: Props) {
       const trimmedShort = createForm.shortDescription.trim()
       const payload = {
         name: trimmedName,
-        durationMin: Number.isFinite(createForm.durationMin) ? Math.max(5, Math.round(createForm.durationMin)) : 30,
-        priceCents: toPriceCents(createForm.priceDollars),
         description: trimmedDescription,
         shortDescription: trimmedShort === "" ? null : trimmedShort,
         parentId: createForm.parentId || null,
@@ -440,8 +408,6 @@ export default function ServicesManager({ initialServices }: Props) {
       const trimmedShort = editForm.shortDescription.trim()
       const payload = {
         name: trimmedName,
-        durationMin: Number.isFinite(editForm.durationMin) ? Math.max(5, Math.round(editForm.durationMin)) : undefined,
-        priceCents: toPriceCents(editForm.priceDollars),
         description: trimmedDescription,
         shortDescription: trimmedShort === "" ? null : trimmedShort,
         parentId: editForm.parentId || null,
@@ -513,8 +479,8 @@ export default function ServicesManager({ initialServices }: Props) {
           <p className="text-xs uppercase tracking-[0.35em] text-indigo-400">Create Service</p>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Add a new offering</h2>
         </header>
-        <form className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" onSubmit={handleCreate}>
-          <div className="md:col-span-2">
+        <form className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" onSubmit={handleCreate}>
+          <div className="md:col-span-2 lg:col-span-2">
             <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Name</label>
             <input
               type="text"
@@ -523,31 +489,6 @@ export default function ServicesManager({ initialServices }: Props) {
               onChange={(event) => handleCreateFieldChange("name", event.target.value)}
               disabled={creating}
               required
-            />
-          </div>
-          <div>
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Duration (min)</label>
-            <input
-              type="number"
-              min={5}
-              max={480}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-              value={createForm.durationMin}
-              onChange={(event) => handleCreateFieldChange("durationMin", Number(event.target.value))}
-              disabled={creating}
-            />
-          </div>
-          <div>
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Price (USD)</label>
-            <input
-              type="number"
-              min={0}
-              step={0.01}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-              value={createForm.priceDollars}
-              onChange={(event) => handleCreateFieldChange("priceDollars", event.target.value)}
-              placeholder="Optional"
-              disabled={creating}
             />
           </div>
           <div>
@@ -632,48 +573,23 @@ export default function ServicesManager({ initialServices }: Props) {
               Close
             </button>
           </header>
-          <form className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" onSubmit={handleEditSubmit}>
-            <div className="md:col-span-2">
-              <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Name</label>
-              <input
-                type="text"
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                value={editForm.name}
+            <form className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" onSubmit={handleEditSubmit}>
+              <div className="md:col-span-2 lg:col-span-2">
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Name</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  value={editForm.name}
                 onChange={(event) => handleEditFieldChange("name", event.target.value)}
                 disabled={savingEdit}
                 required
               />
-            </div>
-            <div>
-              <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Duration (min)</label>
-              <input
-                type="number"
-                min={5}
-                max={480}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                value={editForm.durationMin}
-                onChange={(event) => handleEditFieldChange("durationMin", Number(event.target.value))}
-                disabled={savingEdit}
-              />
-            </div>
-            <div>
-              <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Price (USD)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                value={editForm.priceDollars}
-                onChange={(event) => handleEditFieldChange("priceDollars", event.target.value)}
-                placeholder="Optional"
-                disabled={savingEdit}
-              />
-            </div>
-            <div>
-              <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Parent Service</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                value={editForm.parentId}
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Parent Service</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  value={editForm.parentId}
                 onChange={(event) => handleEditFieldChange("parentId", event.target.value)}
                 disabled={savingEdit}
               >
@@ -699,7 +615,7 @@ export default function ServicesManager({ initialServices }: Props) {
                 disabled={savingEdit}
               />
             </div>
-            <div className="md:col-span-2 lg:col-span-4">
+            <div className="md:col-span-2 lg:col-span-3">
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
               <textarea
                 className="mt-1 h-20 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
@@ -709,7 +625,7 @@ export default function ServicesManager({ initialServices }: Props) {
                 required
               />
             </div>
-            <div className="md:col-span-2 lg:col-span-4">
+            <div className="md:col-span-2 lg:col-span-3">
               <ImageUploadField
                 title="Product Image"
                 images={editForm.images}
@@ -752,17 +668,15 @@ export default function ServicesManager({ initialServices }: Props) {
           <span className="text-xs text-slate-500">{services.length} records</span>
         </header>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-slate-600 dark:text-slate-300">
-            <thead className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              <tr className="border-b border-slate-200/70 dark:border-slate-800/60">
-                <th className="px-3 py-2 text-left">Name & Details</th>
-                <th className="px-3 py-2 text-center">Duration</th>
-                <th className="px-3 py-2 text-center">Price</th>
-                <th className="px-3 py-2 text-center">Status</th>
-                <th className="px-3 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+            <table className="min-w-full text-sm text-slate-600 dark:text-slate-300">
+              <thead className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <tr className="border-b border-slate-200/70 dark:border-slate-800/60">
+                  <th className="px-3 py-2 text-left">Name & Details</th>
+                  <th className="px-3 py-2 text-center">Status</th>
+                  <th className="px-3 py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
               {services.map((service) => (
                 <tr key={service.id} className="border-b border-slate-200/60 dark:border-slate-800/40 last:border-b-0">
                   <td className="px-3 py-3 text-slate-900 dark:text-slate-100">
@@ -799,8 +713,8 @@ export default function ServicesManager({ initialServices }: Props) {
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-center text-slate-500 dark:text-slate-400">{service.durationMin} min</td>
-                  <td className="px-3 py-3 text-center text-slate-700 dark:text-slate-200">{formatPrice(service.priceCents)}</td>
+                  
+                  
                   <td className="px-3 py-3 text-center">
                     <button
                       type="button"
@@ -835,7 +749,7 @@ export default function ServicesManager({ initialServices }: Props) {
               ))}
               {services.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={3} className="px-3 py-8 text-center text-sm text-slate-500">
                     No services added yet.
                   </td>
                 </tr>
@@ -847,6 +761,3 @@ export default function ServicesManager({ initialServices }: Props) {
     </div>
   )
 }
-
-
-  const MAX_UPLOAD_BYTES = 4 * 1024 * 1024 // 4MB (must match API limit)

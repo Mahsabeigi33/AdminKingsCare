@@ -49,8 +49,6 @@ model Patient {
 model Service {
   id           String        @id @default(cuid())
   name         String        @unique
-  durationMin  Int           @default(15)
-  priceCents   Int           @default(0)
   description  String?
   shortDescription String?
   images       String[]      @db.Text @default([])

@@ -37,6 +37,6 @@ export const adminNavItems: AdminNavItem[] = [
   { href: "/admin/appointments", label: "Appointments", icon: AppointmentsIcon },
   { href: "/admin/doctors", label: "Doctors", icon: DoctorsIcon },
   // { href: "/admin/blogs", label: "Blogs", icon: BlogsIcon },
-  { href: "/admin/users", label: "Users", icon: UsersIcon },
-  { href: "/admin/patients", label: "Patients", icon: PatientsIcon },
+  // { href: "/admin/users", label: "Users", icon: UsersIcon },
+  // { href: "/admin/patients", label: "Patients", icon: PatientsIcon },
 ]

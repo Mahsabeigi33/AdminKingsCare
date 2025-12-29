@@ -39,7 +39,7 @@ export function AdminSidebar() {
       <div className="mt-auto rounded-2xl bg-slate-100/80 px-4 py-5 text-slate-600 transition-colors dark:bg-slate-900/70 dark:text-slate-300">
         <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">Need Help?</p>
         <p className="mt-2 text-sm">
-          Reach out to support@kingscare.ca
+         call us at Web Magic Co. for support.
         </p>
       </div>
     </aside>

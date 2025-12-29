@@ -9,8 +9,6 @@ const imagesSchema = z
 
 const serviceSchema = z.object({
   name: z.string().trim().min(1),
-  durationMin: z.coerce.number().int().positive().max(480).default(30),
-  priceCents: z.coerce.number().int().nonnegative().optional(),
   description: z.string().trim().min(1, "Description is required"),
   shortDescription: z.string().trim().max(200).nullable().optional(),
   active: z.coerce.boolean().optional(),
@@ -59,8 +57,6 @@ export async function POST(request: Request) {
       const service = await prisma.service.create({
         data: {
           name: payload.name,
-          durationMin: payload.durationMin,
-          priceCents: payload.priceCents ?? 0,
           description: payload.description,
           shortDescription: payload.shortDescription ?? null,
           ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
@@ -76,8 +72,6 @@ export async function POST(request: Request) {
         const service = await prisma.service.create({
           data: {
             name: payload.name,
-            durationMin: payload.durationMin,
-            priceCents: payload.priceCents ?? 0,
             description: payload.description,
             ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
             images: payload.images,

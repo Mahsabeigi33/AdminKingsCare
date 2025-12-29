@@ -10,8 +10,6 @@ const imagesSchema = z
 
 const updateSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  durationMin: z.coerce.number().int().positive().max(480).optional(),
-  priceCents: z.coerce.number().int().nonnegative().optional(),
   description: z.string().trim().min(1, "Description is required").optional(),
   shortDescription: z.string().trim().max(200).nullable().optional(),
   active: z.coerce.boolean().optional(),
@@ -42,8 +40,6 @@ export async function PATCH(
     const data: Record<string, unknown> = {}
 
     if (payload.name !== undefined) data.name = payload.name
-    if (payload.durationMin !== undefined) data.durationMin = payload.durationMin
-    if (payload.priceCents !== undefined) data.priceCents = payload.priceCents
     if (payload.description !== undefined) data.description = payload.description
     if (payload.active !== undefined) data.active = payload.active
     if (payload.parentId !== undefined) {

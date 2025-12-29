@@ -10,7 +10,7 @@ export default async function AppointmentsPage() {
       take: 40,
       include: {
         patient: { select: { id: true, firstName: true, lastName: true } },
-        service: { select: { id: true, name: true, priceCents: true } },
+        service: { select: { id: true, name: true } },
         staff: { select: { id: true, name: true } },
       },
     }),
@@ -21,7 +21,7 @@ export default async function AppointmentsPage() {
     prisma.service.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, priceCents: true },
+      select: { id: true, name: true },
     }),
     prisma.user.findMany({
       orderBy: { name: "asc" },
@@ -52,4 +52,3 @@ export default async function AppointmentsPage() {
     </div>
   )
 }
-
