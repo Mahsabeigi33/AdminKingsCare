@@ -3,11 +3,6 @@ import { Prisma } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
-const stringArray = z
-  .array(z.string().trim().min(1))
-  .transform((items) => Array.from(new Set(items)))
-  .default([])
-
 const nullableStr = (min?: number) =>
   z
     .string()
@@ -26,18 +21,16 @@ const updateSchema = z.object({
   email: nullableStr().refine((value) => !value || /\S+@\S+\.\S+/.test(value), {
     message: "Invalid email",
   }),
-  phone: nullableStr(5),
   yearsExperience: z.coerce.number().int().min(0).max(80).optional().nullable(),
-  languages: stringArray.optional(),
+  priority: z.coerce.number().int().min(0).max(1000).optional().nullable(),
   photoUrl: z.string().trim().optional().nullable(),
-  gallery: stringArray.optional(),
+  gallery: z.array(z.string().trim().min(1)).optional(),
   active: z.coerce.boolean().optional(),
   featured: z.coerce.boolean().optional(),
 })
 
 const uniqueFieldMessage: Record<string, string> = {
   email: "Email already in use.",
-  phone: "Phone number already in use.",
 }
 
 const handleKnownError = (error: unknown) => {
@@ -89,8 +82,7 @@ export async function PUT(
         shortBio: payload.shortBio?.trim() ?? null,
         bio: payload.bio?.trim() ?? null,
         email: payload.email ?? null,
-        phone: payload.phone ?? null,
-        languages: payload.languages ?? undefined,
+        priority: payload.priority ?? null,
         gallery: payload.gallery ?? undefined,
         photoUrl: payload.photoUrl ?? undefined,
       },

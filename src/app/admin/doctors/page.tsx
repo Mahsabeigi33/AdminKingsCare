@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic"
 
 export default async function DoctorsPage() {
   const doctors = await prisma.doctor.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
   })
 
   const serialized = doctors.map((doctor) => ({

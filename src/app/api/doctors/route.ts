@@ -3,11 +3,6 @@ import { Prisma } from "@prisma/client"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-const stringArray = z
-  .array(z.string().trim().min(1))
-  .transform((items) => Array.from(new Set(items)))
-  .default([])
-
 const nullableStr = (min?: number) =>
   z
     .string()
@@ -26,11 +21,10 @@ const baseSchema = z.object({
   email: nullableStr().refine((value) => !value || /\S+@\S+\.\S+/.test(value), {
     message: "Invalid email",
   }),
-  phone: nullableStr(5),
   yearsExperience: z.coerce.number().int().min(0).max(80).optional().nullable(),
-  languages: stringArray,
+  priority: z.coerce.number().int().min(0).max(1000).optional().nullable(),
   photoUrl: z.string().trim().optional().nullable(),
-  gallery: stringArray,
+  gallery: z.array(z.string().trim().min(1)).default([]),
   active: z.coerce.boolean().optional(),
   featured: z.coerce.boolean().optional(),
 })
@@ -40,7 +34,6 @@ const updateSchema = baseSchema.partial()
 
 const uniqueFieldMessage: Record<string, string> = {
   email: "Email already in use.",
-  phone: "Phone number already in use.",
 }
 
 const handleKnownError = (error: unknown) => {
@@ -82,7 +75,7 @@ export async function GET(request: Request) {
       ...(featured ? { featured: featured === "true" } : undefined),
       ...(active ? { active: active === "true" } : undefined),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
   })
 
   return NextResponse.json(doctors)
@@ -99,9 +92,8 @@ export async function POST(request: Request) {
         shortBio: payload.shortBio?.trim() || null,
         bio: payload.bio?.trim() || null,
         email: payload.email ?? null,
-        phone: payload.phone ?? null,
         yearsExperience: payload.yearsExperience ?? null,
-        languages: payload.languages,
+        priority: payload.priority ?? null,
         photoUrl: payload.photoUrl?.trim() || null,
         gallery: payload.gallery,
         active: payload.active ?? true,

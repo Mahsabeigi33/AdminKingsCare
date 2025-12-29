@@ -11,9 +11,8 @@ type Doctor = {
   shortBio?: string | null
   bio?: string | null
   email?: string | null
-  phone?: string | null
   yearsExperience?: number | null
-  languages?: string[]
+  priority?: number | null
   photoUrl?: string | null
   gallery?: string[]
   active: boolean
@@ -35,9 +34,8 @@ type FormState = {
   shortBio: string
   bio: string
   email: string
-  phone: string
+  priority: string
   yearsExperience: string
-  languages: string
   photoUrl: string
   gallery: string[]
   active: boolean
@@ -54,21 +52,12 @@ const emptyForm: FormState = {
   shortBio: "",
   bio: "",
   email: "",
-  phone: "",
+  priority: "",
   yearsExperience: "",
-  languages: "",
   photoUrl: "",
   gallery: [],
   active: true,
   featured: false,
-}
-
-const parseLanguages = (value: string) => {
-  const seen = new Set<string>()
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0 && !seen.has(item) && !!seen.add(item))
 }
 
 async function uploadFiles(files: File[]): Promise<string[]> {
@@ -130,10 +119,9 @@ export default function DoctorsManager({ initialDoctors }: Props) {
       shortBio: doctor.shortBio ?? "",
       bio: doctor.bio ?? "",
       email: doctor.email ?? "",
-      phone: doctor.phone ?? "",
+      priority: typeof doctor.priority === "number" ? String(doctor.priority) : "",
       yearsExperience:
         typeof doctor.yearsExperience === "number" ? String(doctor.yearsExperience) : "",
-      languages: (doctor.languages ?? []).join(", "),
       photoUrl: doctor.photoUrl ?? "",
       gallery: doctor.gallery ?? [],
       active: doctor.active,
@@ -188,9 +176,10 @@ export default function DoctorsManager({ initialDoctors }: Props) {
       return
     }
     setSubmitting(true)
-    const languages = parseLanguages(form.languages)
     const experienceValue = form.yearsExperience.trim()
     const years = experienceValue ? Number(experienceValue) : null
+    const priorityValue = form.priority.trim()
+    const priority = priorityValue ? Number(priorityValue) : null
     const payload = {
       fullName: form.fullName.trim(),
       title: form.title.trim() || null,
@@ -198,9 +187,8 @@ export default function DoctorsManager({ initialDoctors }: Props) {
       shortBio: form.shortBio.trim() || null,
       bio: form.bio.trim() || null,
       email: form.email.trim() || null,
-      phone: form.phone.trim() || null,
       yearsExperience: Number.isFinite(years) ? years : null,
-      languages,
+      priority: Number.isFinite(priority) ? priority : null,
       photoUrl: form.photoUrl.trim() || null,
       gallery: form.gallery,
       active: form.active,
@@ -325,32 +313,18 @@ export default function DoctorsManager({ initialDoctors }: Props) {
                   disabled={submitting}
                 />
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <div>
-                  <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                    value={form.email}
-                    onChange={(event) => handleChange("email", event.target.value)}
-                    placeholder="doctor@kingscare.ca"
-                    disabled={submitting}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                    Phone
-                  </label>
-                  <input
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                    value={form.phone}
-                    onChange={(event) => handleChange("phone", event.target.value)}
-                    placeholder="+1 (555) 123-4567"
-                    disabled={submitting}
-                  />
-                </div>
+              <div>
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  value={form.email}
+                  onChange={(event) => handleChange("email", event.target.value)}
+                  placeholder="doctor@kingscare.ca"
+                  disabled={submitting}
+                />
               </div>
             </div>
 
@@ -383,6 +357,21 @@ export default function DoctorsManager({ initialDoctors }: Props) {
                   disabled={submitting}
                 />
               </div>
+              <div>
+                <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Priority (lower shows first)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={1000}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                  value={form.priority}
+                  onChange={(event) => handleChange("priority", event.target.value)}
+                  placeholder="e.g. 1"
+                  disabled={submitting}
+                />
+              </div>
             </div>
 
             <div>
@@ -398,39 +387,25 @@ export default function DoctorsManager({ initialDoctors }: Props) {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Languages (comma separated)
-                </label>
+            <div className="flex items-center gap-6 pt-2">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                 <input
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
-                  value={form.languages}
-                  onChange={(event) => handleChange("languages", event.target.value)}
-                  placeholder="English, French, Farsi"
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(event) => handleChange("active", event.target.checked)}
                   disabled={submitting}
                 />
-              </div>
-              <div className="flex items-center gap-6 pt-7">
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={form.active}
-                    onChange={(event) => handleChange("active", event.target.checked)}
-                    disabled={submitting}
-                  />
-                  Active
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={form.featured}
-                    onChange={(event) => handleChange("featured", event.target.checked)}
-                    disabled={submitting}
-                  />
-                  Featured
-                </label>
-              </div>
+                Active
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(event) => handleChange("featured", event.target.checked)}
+                  disabled={submitting}
+                />
+                Featured
+              </label>
             </div>
           </div>
 
@@ -561,6 +536,11 @@ export default function DoctorsManager({ initialDoctors }: Props) {
                     <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                       {doctor.fullName}
                     </h3>
+                    {typeof doctor.priority === "number" ? (
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        Priority {doctor.priority}
+                      </span>
+                    ) : null}
                     {doctor.featured ? (
                       <span className="rounded-full bg-indigo-100 px-2 py-1 text-[11px] font-semibold text-indigo-700">
                         Featured
@@ -582,12 +562,8 @@ export default function DoctorsManager({ initialDoctors }: Props) {
               </div>
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
                 {doctor.email ? <span>{doctor.email}</span> : null}
-                {doctor.phone ? <span>{doctor.phone}</span> : null}
                 {typeof doctor.yearsExperience === "number" ? (
                   <span>{doctor.yearsExperience} yrs experience</span>
-                ) : null}
-                {(doctor.languages ?? []).length ? (
-                  <span>Speaks: {(doctor.languages ?? []).join(", ")}</span>
                 ) : null}
               </div>
               <div className="mt-4 flex items-center gap-3">

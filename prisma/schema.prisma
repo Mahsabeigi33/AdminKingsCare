@@ -131,11 +131,10 @@ model Doctor {
   shortBio        String?
   bio             String?
   email           String?  @unique
-  phone           String?  @unique
   yearsExperience Int?
-  languages       String[] @db.Text @default([])
   photoUrl        String?
   gallery         String[] @db.Text @default([])
+  priority        Int?
   active          Boolean  @default(true)
   featured        Boolean  @default(false)
   createdAt       DateTime @default(now())
