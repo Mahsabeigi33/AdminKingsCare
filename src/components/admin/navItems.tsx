@@ -34,8 +34,9 @@ const DoctorsIcon = createIcon("M5 8a7 7 0 1114 0v6a4 4 0 01-4 4h-6a4 4 0 01-4-4
 export const adminNavItems: AdminNavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/admin/services", label: "Services", icon: ServicesIcon },
-  { href: "/admin/appointments", label: "Appointments", icon: AppointmentsIcon },
   { href: "/admin/doctors", label: "Doctors", icon: DoctorsIcon },
+  { href: "/admin/appointments", label: "Appointments", icon: AppointmentsIcon },
+ 
   // { href: "/admin/blogs", label: "Blogs", icon: BlogsIcon },
   // { href: "/admin/users", label: "Users", icon: UsersIcon },
   // { href: "/admin/patients", label: "Patients", icon: PatientsIcon },

@@ -36,8 +36,6 @@ CREATE TABLE "Patient" (
 CREATE TABLE "Service" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "durationMin" INTEGER NOT NULL DEFAULT 15,
-    "priceCents" INTEGER NOT NULL DEFAULT 0,
     "description" TEXT,
     "active" BOOLEAN NOT NULL DEFAULT true,
 

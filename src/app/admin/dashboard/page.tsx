@@ -42,12 +42,7 @@ export default async function DashboardPage() {
     ])
 
   const stats = [
-    {
-      label: "Total Patients",
-      value: patientsCount,
-      delta: newPatients.length,
-      descriptor: "new this week",
-    },
+    
     {
       label: "Total Appointments",
       value: appointmentsCount,
