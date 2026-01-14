@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic"
 
 export default async function ServicesPage() {
   const services = await prisma.service.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
     include: {
       parent: { select: { id: true, name: true } },
       subServices: {

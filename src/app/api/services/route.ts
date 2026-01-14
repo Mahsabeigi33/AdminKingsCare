@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import type { Prisma } from "@prisma/client"
 
 const imagesSchema = z
   .array(z.string().trim().min(1, "Image URL or path is required"))
@@ -11,6 +12,7 @@ const serviceSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().min(1, "Description is required"),
   shortDescription: z.string().trim().max(200).nullable().optional(),
+  priority: z.coerce.number().int().min(0).max(1000).optional().nullable(),
   active: z.coerce.boolean().optional(),
   parentId: z.string().cuid().optional().nullable(),
   images: imagesSchema,
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
           ],
         }
       : undefined,
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
     include: baseIncludes,
   })
 
@@ -54,29 +56,32 @@ export async function POST(request: Request) {
     const payload = serviceSchema.parse(await request.json())
 
     try {
+      const data = {
+        name: payload.name,
+        description: payload.description,
+        shortDescription: payload.shortDescription ?? null,
+        priority: payload.priority ?? null,
+        ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
+        images: payload.images,
+        active: payload.active ?? true,
+      }
       const service = await prisma.service.create({
-        data: {
-          name: payload.name,
-          description: payload.description,
-          shortDescription: payload.shortDescription ?? null,
-          ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
-          images: payload.images,
-          active: payload.active ?? true,
-        },
+        data,
         include: baseIncludes,
       })
       return NextResponse.json(service, { status: 201 })
     } catch (innerErr: unknown) {
       const msg = String((innerErr as Error)?.message ?? "")
-      if (msg.includes("Unknown argument `shortDescription`")) {
+      if (msg.includes("Unknown argument `shortDescription`") || msg.includes("Unknown argument `priority`")) {
+        const fallback: Prisma.ServiceCreateInput = {
+          name: payload.name,
+          description: payload.description,
+          ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
+          images: payload.images,
+          active: payload.active ?? true,
+        }
         const service = await prisma.service.create({
-          data: {
-            name: payload.name,
-            description: payload.description,
-            ...(payload.parentId ? { parent: { connect: { id: payload.parentId } } } : {}),
-            images: payload.images,
-            active: payload.active ?? true,
-          },
+          data: fallback,
           include: baseIncludes,
         })
         return NextResponse.json(service, { status: 201 })
