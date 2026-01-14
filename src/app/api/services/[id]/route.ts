@@ -12,6 +12,7 @@ const updateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().min(1, "Description is required").optional(),
   shortDescription: z.string().trim().max(200).nullable().optional(),
+  priority: z.coerce.number().int().min(0).max(1000).optional().nullable(),
   active: z.coerce.boolean().optional(),
   parentId: z.string().cuid().optional().nullable(),
   images: imagesSchema.optional(),
@@ -48,6 +49,7 @@ export async function PATCH(
         : { disconnect: true }
     }
     if (payload.shortDescription !== undefined) data.shortDescription = payload.shortDescription ?? null
+    if (payload.priority !== undefined) data.priority = payload.priority ?? null
     if (payload.images !== undefined) data.images = payload.images
 
     try {
@@ -59,9 +61,10 @@ export async function PATCH(
       return NextResponse.json(service)
     } catch (innerErr: unknown) {
       const msg = String((innerErr as Error)?.message ?? "")
-      if (msg.includes("Unknown argument `shortDescription`")) {
+      if (msg.includes("Unknown argument `shortDescription`") || msg.includes("Unknown argument `priority`")) {
         const rest: Record<string, unknown> = { ...(data as Record<string, unknown>) }
         delete (rest as Record<string, unknown>)["shortDescription"]
+        delete (rest as Record<string, unknown>)["priority"]
         const service = await prisma.service.update({
           where: { id },
           data: rest,

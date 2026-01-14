@@ -20,6 +20,7 @@ type Service = {
   description: string | null
   shortDescription?: string | null
   images: string[]
+  priority?: number | null
   active: boolean
   parentId: string | null
   parent?: ServiceRelation | null
@@ -37,6 +38,7 @@ type FormState = {
   shortDescription: string
   parentId: string
   images: string[]
+  priority: string
 }
 
 type ToastState = {
@@ -53,6 +55,7 @@ const buildEmptyForm = (): FormState => ({
   shortDescription: "",
   parentId: "",
   images: [],
+  priority: "",
 })
 
 const serviceToForm = (service: Service): FormState => ({
@@ -61,6 +64,7 @@ const serviceToForm = (service: Service): FormState => ({
   shortDescription: service.shortDescription ?? "",
   parentId: service.parentId ?? "",
   images: service.images ?? [],
+  priority: typeof service.priority === "number" ? String(service.priority) : "",
 })
 
 type ImageUploadFieldProps = {
@@ -309,12 +313,15 @@ export default function ServicesManager({ initialServices }: Props) {
     setCreating(true)
     try {
       const trimmedShort = createForm.shortDescription.trim()
+      const priorityValue = createForm.priority.trim()
+      const priority = priorityValue ? Number(priorityValue) : null
       const payload = {
         name: trimmedName,
         description: trimmedDescription,
         shortDescription: trimmedShort === "" ? null : trimmedShort,
         parentId: createForm.parentId || null,
         images: createForm.images,
+        priority: Number.isFinite(priority) ? priority : null,
       }
       const response = await fetch("/api/services", {
         method: "POST",
@@ -406,12 +413,15 @@ export default function ServicesManager({ initialServices }: Props) {
     setRowBusyId(editingService.id)
     try {
       const trimmedShort = editForm.shortDescription.trim()
+      const priorityValue = editForm.priority.trim()
+      const priority = priorityValue ? Number(priorityValue) : null
       const payload = {
         name: trimmedName,
         description: trimmedDescription,
         shortDescription: trimmedShort === "" ? null : trimmedShort,
         parentId: editForm.parentId || null,
         images: editForm.images,
+        priority: Number.isFinite(priority) ? priority : null,
       }
       const response = await fetch(`/api/services/${editingService.id}`, {
         method: "PATCH",
@@ -518,6 +528,19 @@ export default function ServicesManager({ initialServices }: Props) {
               disabled={creating}
             />
           </div>
+          <div>
+            <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Priority (lower shows first)</label>
+            <input
+              type="number"
+              min={0}
+              max={1000}
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+              value={createForm.priority}
+              onChange={(event) => handleCreateFieldChange("priority", event.target.value)}
+              placeholder="e.g. 1"
+              disabled={creating}
+            />
+          </div>
           <div className="md:col-span-2 lg:col-span-4">
             <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
             <textarea
@@ -615,6 +638,19 @@ export default function ServicesManager({ initialServices }: Props) {
                 disabled={savingEdit}
               />
             </div>
+            <div>
+              <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Priority (lower shows first)</label>
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                value={editForm.priority}
+                onChange={(event) => handleEditFieldChange("priority", event.target.value)}
+                placeholder="e.g. 1"
+                disabled={savingEdit}
+              />
+            </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
               <textarea
@@ -700,6 +736,11 @@ export default function ServicesManager({ initialServices }: Props) {
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
                       {service.parent?.name ? (
                         <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5">Parent: {service.parent.name}</span>
+                      ) : null}
+                      {typeof service.priority === "number" ? (
+                        <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5">
+                          Priority: {service.priority}
+                        </span>
                       ) : null}
                       {service.subServices && service.subServices.length ? (
                         <span className="rounded-full border border-slate-300 dark:border-slate-700 px-2 py-0.5">

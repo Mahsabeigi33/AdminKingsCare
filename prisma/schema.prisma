@@ -52,6 +52,7 @@ model Service {
   description  String?
   shortDescription String?
   images       String[]      @db.Text @default([])
+  priority     Int?
   parentId     String?
   parent       Service?      @relation("ServiceHierarchy", fields: [parentId], references: [id])
   subServices  Service[]     @relation("ServiceHierarchy")
@@ -137,4 +138,11 @@ model Doctor {
   featured        Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                   String   @id
+  homeHeroAnnouncement String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
