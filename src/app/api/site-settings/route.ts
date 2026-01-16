@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const settingsSchema = z.object({
-  homeHeroAnnouncement: z.string().trim().max(200).nullable().optional(),
+  homeHeroAnnouncement: z.string().trim().max(1200).nullable().optional(),
 })
 
 const SETTINGS_ID = "site"

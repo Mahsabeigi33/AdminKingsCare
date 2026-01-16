@@ -29,8 +29,13 @@ export default function SiteSettingsManager({ initialSettings }: Props) {
   const handleSave = async () => {
     setSaving(true)
     try {
+      const normalizedAnnouncement = announcement
+        .replace(/\r\n/g, "\n")
+        .replace(/\n/g, "<br>")
+        .replace(/<\/?br\s*\/?>/gi, "<br>")
+        .trim()
       const payload = {
-        homeHeroAnnouncement: announcement.trim() === "" ? null : announcement.trim(),
+        homeHeroAnnouncement: normalizedAnnouncement === "" ? null : normalizedAnnouncement,
       }
       const response = await fetch("/api/site-settings", {
         method: "PUT",
@@ -71,18 +76,18 @@ export default function SiteSettingsManager({ initialSettings }: Props) {
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-            Announcement (max 200 chars)
+            Announcement (max 1200 chars)
           </label>
           <textarea
             className="mt-2 h-24 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
             value={announcement}
             onChange={(event) => setAnnouncement(event.target.value)}
-            maxLength={200}
+            maxLength={1200}
             placeholder="Example: Walk-in clinic open Saturday 9-2."
             disabled={saving}
           />
           <p className="mt-2 text-xs text-slate-500">
-            Leave blank to hide the announcement.
+            Leave blank to hide the announcement. Use &lt;br&gt; for a new line.
           </p>
         </div>
         <div className="flex items-end">
