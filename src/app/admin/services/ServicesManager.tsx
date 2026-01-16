@@ -1,7 +1,7 @@
 ﻿"use client"
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import type { ChangeEvent, DragEvent, FormEvent } from "react"
 import { useRouter } from "next/navigation"
@@ -211,6 +211,7 @@ export default function ServicesManager({ initialServices }: Props) {
   const [savingEdit, setSavingEdit] = useState(false)
   const [rowBusyId, setRowBusyId] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const editSectionRef = useRef<HTMLElement | null>(null)
 
   const parentOptions = useMemo(() =>
     services
@@ -219,6 +220,14 @@ export default function ServicesManager({ initialServices }: Props) {
   [services])
 
   const closeToast = () => setToast(null)
+
+  useEffect(() => {
+    if (!editingService) return
+    const id = requestAnimationFrame(() => {
+      editSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [editingService])
 
   const reloadServices = async () => {
     const response = await fetch("/api/services", { next: { revalidate }, cache: "force-cache" })
@@ -577,7 +586,7 @@ export default function ServicesManager({ initialServices }: Props) {
       </section>
 
       {editingService ? (
-        <section className={cardClass}>
+        <section ref={editSectionRef} className={cardClass}>
           <header className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-indigo-400">Edit Service</p>
