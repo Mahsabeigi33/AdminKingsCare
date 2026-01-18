@@ -58,12 +58,12 @@ export default function EditorJsEditor({
         placeholder: placeholderRef.current,
         tools: {
           header: {
-            class: Header,
+            class: Header as unknown as EditorJS.ToolConstructable,
             inlineToolbar: true,
             config: { levels: [2, 3, 4], defaultLevel: 3 },
           },
           list: {
-            class: List,
+            class: List as unknown as EditorJS.ToolConstructable,
             inlineToolbar: true,
           },
         },
