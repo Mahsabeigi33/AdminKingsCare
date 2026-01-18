@@ -704,6 +704,9 @@ export default function ServicesManager({ initialServices }: Props) {
                 onChange={(value) => handleEditFieldChange("description", value)}
                 placeholder="Full service description."
                 minHeightClass="min-h-[220px]"
+                onChange={(value) => handleEditFieldChange("description", value)}
+                placeholder="Full service description."
+                minHeightClass="min-h-[220px]"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
