@@ -446,6 +446,7 @@ export default function ServicesManager({ initialServices }: Props) {
       return
     }
     const trimmedDescription = plainTextFromEditor(editForm.description)
+    const trimmedDescription = plainTextFromEditor(editForm.description)
     if (!trimmedDescription) {
       setToast({ severity: "error", message: "Description is required." })
       return
