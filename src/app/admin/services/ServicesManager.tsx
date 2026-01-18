@@ -7,6 +7,7 @@ import type { ChangeEvent, DragEvent, FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Snackbar from "@mui/material/Snackbar"
 import Alert from "@mui/material/Alert"
+import EditorJsEditor from "@/components/EditorJsEditor"
 
 type ServiceRelation = {
   id: string
@@ -48,6 +49,42 @@ type ToastState = {
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024 // 4MB (must match API limit)
 const cardClass = "rounded-3xl border border-slate-200/70 dark:border-slate-800/60 bg-white/90 dark:bg-slate-950/80 p-6 shadow-2xl shadow-slate-200/60 dark:shadow-black/20"
+const stripHtml = (value: string) =>
+  value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim()
+const safeParse = (value: string) => {
+  if (!value) return null
+  const trimmed = value.trim()
+  const tryParse = (input: string) => {
+    try {
+      return JSON.parse(input)
+    } catch {
+      return null
+    }
+  }
+  const cleaned = trimmed.replace(/\\+$/, "")
+  const parsed = tryParse(trimmed) ?? tryParse(cleaned)
+  if (typeof parsed === "string") {
+    const nested = tryParse(parsed) ?? tryParse(parsed.replace(/\\+$/, ""))
+    return nested ?? parsed
+  }
+  return parsed
+}
+const plainTextFromEditor = (value: string) => {
+  const parsed = safeParse(value)
+  if (!parsed || !Array.isArray(parsed.blocks)) {
+    return stripHtml(value)
+  }
+  const text = parsed.blocks
+    .map((block: { data?: { text?: string; items?: string[] } }) => {
+      if (block?.data?.text) return stripHtml(String(block.data.text))
+      if (Array.isArray(block?.data?.items)) {
+        return block.data.items.map((item) => stripHtml(String(item))).join(" ")
+      }
+      return ""
+    })
+    .join(" ")
+  return stripHtml(text)
+}
 
 const buildEmptyForm = (): FormState => ({
   name: "",
@@ -310,7 +347,7 @@ export default function ServicesManager({ initialServices }: Props) {
       setToast({ severity: "error", message: "Name is required." })
       return
     }
-    const trimmedDescription = createForm.description.trim()
+    const trimmedDescription = plainTextFromEditor(createForm.description)
     if (!trimmedDescription) {
       setToast({ severity: "error", message: "Description is required." })
       return
@@ -321,13 +358,13 @@ export default function ServicesManager({ initialServices }: Props) {
     }
     setCreating(true)
     try {
-      const trimmedShort = createForm.shortDescription.trim()
+      const trimmedShort = plainTextFromEditor(createForm.shortDescription)
       const priorityValue = createForm.priority.trim()
       const priority = priorityValue ? Number(priorityValue) : null
       const payload = {
         name: trimmedName,
-        description: trimmedDescription,
-        shortDescription: trimmedShort === "" ? null : trimmedShort,
+        description: createForm.description,
+        shortDescription: trimmedShort === "" ? null : createForm.shortDescription,
         parentId: createForm.parentId || null,
         images: createForm.images,
         priority: Number.isFinite(priority) ? priority : null,
@@ -408,7 +445,7 @@ export default function ServicesManager({ initialServices }: Props) {
       setToast({ severity: "error", message: "Name is required." })
       return
     }
-    const trimmedDescription = editForm.description.trim()
+    const trimmedDescription = plainTextFromEditor(editForm.description)
     if (!trimmedDescription) {
       setToast({ severity: "error", message: "Description is required." })
       return
@@ -421,13 +458,13 @@ export default function ServicesManager({ initialServices }: Props) {
     setSavingEdit(true)
     setRowBusyId(editingService.id)
     try {
-      const trimmedShort = editForm.shortDescription.trim()
+      const trimmedShort = plainTextFromEditor(editForm.shortDescription)
       const priorityValue = editForm.priority.trim()
       const priority = priorityValue ? Number(priorityValue) : null
       const payload = {
         name: trimmedName,
-        description: trimmedDescription,
-        shortDescription: trimmedShort === "" ? null : trimmedShort,
+        description: editForm.description,
+        shortDescription: trimmedShort === "" ? null : editForm.shortDescription,
         parentId: editForm.parentId || null,
         images: editForm.images,
         priority: Number.isFinite(priority) ? priority : null,
@@ -553,12 +590,11 @@ export default function ServicesManager({ initialServices }: Props) {
           </div>
           <div className="md:col-span-2 lg:col-span-4">
             <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
-            <textarea
-              className="mt-1 h-20 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+            <EditorJsEditor
               value={createForm.description}
-              onChange={(event) => handleCreateFieldChange("description", event.target.value)}
-              disabled={creating}
-              required
+              onChange={(value) => handleCreateFieldChange("description", value)}
+              placeholder="Full service description."
+              minHeightClass="min-h-[220px]"
             />
           </div>
           <div className="md:col-span-2 lg:col-span-4">
@@ -638,9 +674,9 @@ export default function ServicesManager({ initialServices }: Props) {
             </div>
             <div>
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Short Description</label>
-              <input
-                type="text"
-                maxLength={250}
+              <textarea
+                maxLength={200}
+                rows={3}
                 className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
                 value={editForm.shortDescription}
                 onChange={(event) => handleEditFieldChange("shortDescription", event.target.value)}
@@ -663,16 +699,11 @@ export default function ServicesManager({ initialServices }: Props) {
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
-              <textarea
-                className="mt-1 min-h-[200px] w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+              <EditorJsEditor
                 value={editForm.description}
-              onChange={(e) => {
-                e.target.style.height = "auto";
-                e.target.style.height = `${e.target.scrollHeight}px`;
-                handleEditFieldChange("description", e.target.value);
-              }}
-                disabled={savingEdit}
-                required
+                onChange={(value) => handleEditFieldChange("description", value)}
+                placeholder="Full service description."
+                minHeightClass="min-h-[220px]"
               />
             </div>
             <div className="md:col-span-2 lg:col-span-3">
@@ -732,9 +763,9 @@ export default function ServicesManager({ initialServices }: Props) {
                   <td className="px-3 py-3 text-slate-900 dark:text-slate-100">
                     <div className="font-medium">{service.name}</div>
                     {service.shortDescription ? (
-                      <p className="text-xs text-slate-500">{service.shortDescription}</p>
+                      <p className="text-xs text-slate-500">{plainTextFromEditor(service.shortDescription)}</p>
                     ) : service.description ? (
-                      <p className="text-xs text-slate-500">{service.description}</p>
+                      <p className="text-xs text-slate-500">{plainTextFromEditor(service.description)}</p>
                     ) : null}
                     {service.images && service.images.length > 0 ? (
                       <div className="mt-2 relative h-16 w-24 overflow-hidden rounded bg-slate-100 dark:bg-slate-900/60">
