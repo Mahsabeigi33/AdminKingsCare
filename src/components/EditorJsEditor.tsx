@@ -25,7 +25,7 @@ export default function EditorJsEditor({
   minHeightClass = "min-h-[160px]",
 }: EditorJsEditorProps) {
   const holderId = useId()
-  const editorRef = useRef<EditorJS | null>(null)
+  const editorRef = useRef<import("@editorjs/editorjs").default | null>(null)
   const lastValueRef = useRef<string>("")
   const isApplyingValueRef = useRef(false)
   const onChangeRef = useRef(onChange)
