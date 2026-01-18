@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { useRouter } from "next/navigation"
+import EditorJsEditor from "@/components/EditorJsEditor"
 
 type Doctor = {
   id: string
@@ -91,6 +92,7 @@ export default function DoctorsManager({ initialDoctors }: Props) {
   const [doctors, setDoctors] = useState(initialDoctors)
   const [form, setForm] = useState<FormState>({ ...emptyForm })
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formResetKey, setFormResetKey] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
@@ -115,6 +117,7 @@ export default function DoctorsManager({ initialDoctors }: Props) {
   const resetForm = () => {
     setForm({ ...emptyForm })
     setEditingId(null)
+    setFormResetKey((prev) => prev + 1)
   }
 
   const showToast = (tone: Toast["tone"], message: string) => setToast({ tone, message })
@@ -281,7 +284,11 @@ export default function DoctorsManager({ initialDoctors }: Props) {
             </span>
           ) : null}
         </header>
-        <form onSubmit={handleSubmit} className="mt-4 grid gap-4 lg:grid-cols-3">
+        <form
+          key={formResetKey}
+          onSubmit={handleSubmit}
+          className="mt-4 grid gap-4 lg:grid-cols-3"
+        >
           <div className="lg:col-span-2 grid gap-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -387,12 +394,11 @@ export default function DoctorsManager({ initialDoctors }: Props) {
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
                 Detailed bio
               </label>
-              <textarea
-                className="mt-1 h-32 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+              <EditorJsEditor
                 value={form.bio}
-                onChange={(event) => handleChange("bio", event.target.value)}
+                onChange={(value) => handleChange("bio", value)}
                 placeholder="Longer biography, education, approach, languages, and interests."
-                disabled={submitting}
+                minHeightClass="min-h-[240px]"
               />
             </div>
 
