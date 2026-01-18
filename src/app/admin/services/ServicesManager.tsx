@@ -446,6 +446,7 @@ export default function ServicesManager({ initialServices }: Props) {
       return
     }
     const trimmedDescription = plainTextFromEditor(editForm.description)
+    const trimmedDescription = plainTextFromEditor(editForm.description)
     if (!trimmedDescription) {
       setToast({ severity: "error", message: "Description is required." })
       return
@@ -701,6 +702,9 @@ export default function ServicesManager({ initialServices }: Props) {
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
               <EditorJsEditor
                 value={editForm.description}
+                onChange={(value) => handleEditFieldChange("description", value)}
+                placeholder="Full service description."
+                minHeightClass="min-h-[220px]"
                 onChange={(value) => handleEditFieldChange("description", value)}
                 placeholder="Full service description."
                 minHeightClass="min-h-[220px]"
