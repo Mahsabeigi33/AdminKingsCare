@@ -230,7 +230,7 @@ export default function ServicesManager({ initialServices }: Props) {
   }, [editingService])
 
   const reloadServices = async () => {
-    const response = await fetch("/api/services", { next: { revalidate }, cache: "force-cache" })
+    const response = await fetch("/api/services", { cache: "no-store" })
     if (!response.ok) throw new Error("Failed to load services")
     const refreshed: Service[] = await response.json()
     setServices(refreshed)
@@ -530,6 +530,7 @@ export default function ServicesManager({ initialServices }: Props) {
             <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Short Description</label>
             <textarea
               maxLength={200}
+              rows={3}
               className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
               value={createForm.shortDescription}
               onChange={(event) => handleCreateFieldChange("shortDescription", event.target.value)}
@@ -639,7 +640,7 @@ export default function ServicesManager({ initialServices }: Props) {
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Short Description</label>
               <input
                 type="text"
-                maxLength={200}
+                maxLength={250}
                 className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
                 value={editForm.shortDescription}
                 onChange={(event) => handleEditFieldChange("shortDescription", event.target.value)}
@@ -663,9 +664,13 @@ export default function ServicesManager({ initialServices }: Props) {
             <div className="md:col-span-2 lg:col-span-3">
               <label className="text-xs uppercase tracking-[0.3em] text-slate-500">Description</label>
               <textarea
-                className="mt-1 h-20 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
+                className="mt-1 min-h-[200px] w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/70 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:outline-none"
                 value={editForm.description}
-                onChange={(event) => handleEditFieldChange("description", event.target.value)}
+              onChange={(e) => {
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+                handleEditFieldChange("description", e.target.value);
+              }}
                 disabled={savingEdit}
                 required
               />
