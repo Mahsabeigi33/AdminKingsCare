@@ -60,6 +60,14 @@ const emptyForm: FormState = {
   featured: false,
 }
 
+const withCacheKey = (url?: string | null, cacheKey?: string | null) => {
+  if (!url) return ""
+  const key = cacheKey?.trim()
+  if (!key) return url
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}v=${encodeURIComponent(key)}`
+}
+
 async function uploadFiles(files: File[]): Promise<string[]> {
   const uploaded: string[] = []
   for (const file of files) {
@@ -98,6 +106,7 @@ export default function DoctorsManager({ initialDoctors }: Props) {
     () => (isEditing ? doctors.find((item) => item.id === editingId) ?? null : null),
     [doctors, editingId, isEditing],
   )
+  const imageCacheKey = editingDoctor?.updatedAt ?? null
 
   const handleChange = <Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -415,7 +424,7 @@ export default function DoctorsManager({ initialDoctors }: Props) {
               {form.photoUrl ? (
                 <div className="mt-3 space-y-2">
                   <img
-                    src={form.photoUrl}
+                    src={withCacheKey(form.photoUrl, imageCacheKey)}
                     alt="Doctor photo"
                     className="h-40 w-full rounded-xl object-cover"
                   />
@@ -449,7 +458,11 @@ export default function DoctorsManager({ initialDoctors }: Props) {
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {form.gallery.map((url) => (
                     <div key={url} className="group relative">
-                      <img src={url} alt="Gallery" className="h-20 w-full rounded-lg object-cover" />
+                      <img
+                        src={withCacheKey(url, imageCacheKey)}
+                        alt="Gallery"
+                        className="h-20 w-full rounded-lg object-cover"
+                      />
                       <button
                         type="button"
                         className="absolute right-1 top-1 hidden rounded bg-black/60 px-2 py-1 text-[11px] text-white group-hover:block"
@@ -525,7 +538,7 @@ export default function DoctorsManager({ initialDoctors }: Props) {
                 <div className="h-16 w-16 overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800">
                   {doctor.photoUrl ? (
                     <img
-                      src={doctor.photoUrl}
+                      src={withCacheKey(doctor.photoUrl, doctor.updatedAt ?? null)}
                       alt={doctor.fullName}
                       className="h-full w-full object-cover"
                     />
